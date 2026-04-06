@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 const allowedPhoneKeys = new Set([
   "Backspace",
   "Delete",
@@ -17,4 +19,10 @@ export function onPhoneKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
   )
     return;
   e.preventDefault();
+}
+
+export function formatDate(date: string) {
+  const formatted = dayjs(date).format("ddd, DD MMM, YYYY");
+  return formatted;
+  console.log(formatted);
 }
