@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ResponsiveContainer,
   CartesianGrid,
@@ -8,20 +8,13 @@ import {
   Line,
   LineChart,
 } from "recharts";
-type Filter = "Today" | "Week" | "Month";
+import { useBookingCount } from "./hooks/hooks";
+type Filter = "Week" | "Month" | "Year";
 
 const chartData: Record<
   Filter,
   { label: string; online: number; walkin: number }[]
 > = {
-  Today: [
-    { label: "6am", online: 2, walkin: 1 },
-    { label: "9am", online: 5, walkin: 3 },
-    { label: "12pm", online: 8, walkin: 6 },
-    { label: "3pm", online: 6, walkin: 4 },
-    { label: "6pm", online: 9, walkin: 5 },
-    { label: "9pm", online: 4, walkin: 2 },
-  ],
   Week: [
     { label: "Mon", online: 12, walkin: 8 },
     { label: "Tue", online: 18, walkin: 11 },
@@ -37,13 +30,35 @@ const chartData: Record<
     { label: "Wk 3", online: 91, walkin: 48 },
     { label: "Wk 4", online: 105, walkin: 63 },
   ],
+  Year: [
+    { label: "Jan", online: 210, walkin: 140 },
+    { label: "Feb", online: 185, walkin: 120 },
+    { label: "Mar", online: 240, walkin: 160 },
+    { label: "Apr", online: 270, walkin: 175 },
+    { label: "May", online: 310, walkin: 195 },
+    { label: "Jun", online: 290, walkin: 180 },
+    { label: "Jul", online: 325, walkin: 210 },
+    { label: "Aug", online: 350, walkin: 225 },
+    { label: "Sep", online: 300, walkin: 190 },
+    { label: "Oct", online: 280, walkin: 170 },
+    { label: "Nov", online: 260, walkin: 155 },
+    { label: "Dec", online: 340, walkin: 220 },
+  ],
 };
 
 export function BookingChart() {
   const [filter, setFilter] = useState<Filter>("Week");
+  const [onlineTotal, setOnlineTotal] = useState(0);
+  const [walkinTotal, setWalkInTotal] = useState(0);
+  const { data: bookingData } = useBookingCount(filter.toLowerCase());
   const data = chartData[filter];
-  const onlineTotal = data.reduce((s, d) => s + d.online, 0);
-  const walkinTotal = data.reduce((s, d) => s + d.walkin, 0);
+
+  useEffect(() => {
+    console.log(bookingData?.data);
+  }, [bookingData]);
+
+  // const onlineTotal = data.reduce((s, d) => s + d.online, 0);
+  // const walkinTotal = data.reduce((s, d) => s + d.walkin, 0);
 
   return (
     <div className="flex-1 min-w-0 bg-white border border-stone-100 rounded-2xl p-6 shadow-sm">
@@ -77,7 +92,7 @@ export function BookingChart() {
 
       {/* Filter toggle */}
       <div className="flex bg-stone-100 rounded-xl p-1 w-fit mb-6">
-        {(["Today", "Week", "Month"] as Filter[]).map((f) => (
+        {(["Week", "Month", "Year"] as Filter[]).map((f) => (
           <button
             key={f}
             type="button"

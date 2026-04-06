@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 
 interface ModalProps {
@@ -20,37 +20,48 @@ function Modal({
   children,
   modalBoxClassName,
 }: ModalProps) {
-  const modalRef = useRef<HTMLDialogElement>(null);
-
+  // lock body scroll when open
   useEffect(() => {
-    const modal = modalRef.current;
-    if (!modal) return;
-
-    if (isOpen && !modal.open) {
-      modal.showModal();
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
-
-    if (!isOpen && modal.open) {
-      modal.close();
-    }
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
+  if (!isOpen) return null;
+
   return (
-    <dialog onClick={onClose} ref={modalRef} className="modal">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      {/* Backdrop */}
       <div
-        onClick={(e) => e.stopPropagation()}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal box */}
+      <div
         className={twMerge(
-          "modal-box bg-white  h-fit  max-h-[90%]  relative",
+          "relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl shadow-stone-200/60 z-10",
           modalBoxClassName,
         )}
       >
         {title && (
-          <h3 className={twMerge("font-bold text-lg", titleClass)}>{title}</h3>
+          <h3
+            className={twMerge(
+              "font-playfair text-stone-800 text-xl px-6 pt-6",
+              titleClass,
+            )}
+          >
+            {title}
+          </h3>
         )}
-
-        <div className="py-4">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
-    </dialog>
+    </div>
   );
 }
 

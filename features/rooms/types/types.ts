@@ -2,18 +2,19 @@ export interface CreateRoomTypePayload {
   type: string;
   price: number;
   maxGuest: number;
-  image: string;
   isShared: boolean;
   tags: string[];
+  color: string;
 }
 
 export interface RoomCategoryType {
-  _id: string;
+  id: string;
   type: string;
   price: number;
   maxGuest: number;
-  image: string;
   isShared: boolean;
+  tags: string[];
+  color: string;
 }
 
 export interface Room {

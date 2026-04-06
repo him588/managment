@@ -40,7 +40,7 @@ const statusStyles: Record<string, string> = {
 
 export default function BookingListCard() {
   return (
-    <div className="w-full h-full bg-white rounded-2xl overflow-hidden">
+    <div className="w-full h-full bg-white rounded-2xl p-2 shadow-sm overflow-hidden">
       {/* Cover Image */}
       <div className="relative h-[160px]">
         <Image
@@ -97,7 +97,7 @@ export default function BookingListCard() {
 
       {/* Footer */}
       <div className="px-4 py-4 flex items-center justify-center">
-        <span className="text-sm  text-center text-blue-600 cursor-pointer hover:underline">
+        <span className="text-sm font-semibold  text-center text-[#ffa500] cursor-pointer hover:underline">
           View all
         </span>
       </div>

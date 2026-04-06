@@ -30,10 +30,16 @@ export const useCreateRoomType = () => {
   });
 };
 
-export const useGetRooms = () => {
+// Hook - Fixed: Include parameters in queryKey
+export const useGetRooms = (
+  hotelId?: string,
+  categoryId?: string,
+  pageSize?: number,
+  pageNumber?: number,
+) => {
   return useQuery({
-    queryKey: ["rooms"],
-    queryFn: () => getRooms(),
+    queryKey: ["rooms", hotelId, categoryId, pageSize, pageNumber], // Fixed: dynamic query key
+    queryFn: () => getRooms(hotelId, categoryId, pageSize, pageNumber),
   });
 };
 
@@ -61,7 +67,7 @@ export const useBookRoom = () => {
   return useMutation({
     mutationFn: (bookingData: BookRoomPlayload) => bookRoom(bookingData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["room-status"] });
     },
   });
 };

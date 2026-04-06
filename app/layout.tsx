@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import "./globals.css";
 import { UiContextProvider } from "@/context/ui-context";
 import BaseContextProvider from "@/context/base-context";
 import { QueryContextProvider } from "@/context/query-context";
+import "./globals.css";
 
 const geistSans = Plus_Jakarta_Sans({
   variable: "--font-geist-sans",

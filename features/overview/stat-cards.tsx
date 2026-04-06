@@ -2,29 +2,37 @@ import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import React from "react";
 
 type StatItem = {
-  label: string;
+  lable: string;
   value: number | string;
 };
 
 type StatsCardProps = {
   title: string;
-  percentage: string;
+  percentage?: number | string;
   isUp?: boolean;
-  stats: StatItem[];
+  stats?: StatItem[];
   bg: string;
   accent: string;
   icon: React.ReactNode;
+  isLoading?: boolean;
 };
 
 export default function StatsCard({
   title,
-  percentage,
+  percentage = 0,
   isUp = true,
-  stats,
+  stats = [],
   bg,
   accent,
   icon,
+  isLoading = false,
 }: StatsCardProps) {
+  // Handle empty stats array
+  const safeStats = stats.length > 0 ? stats : [{ lable: "N/A", value: "0" }];
+  const primaryStat = safeStats[0];
+  const secondaryStats = safeStats.slice(1);
+  const safePercentage = percentage ?? 0;
+
   return (
     <div className="flex-1 min-w-0 bg-white border border-stone-100 rounded-2xl p-5 shadow-sm relative overflow-hidden">
       {/* Background blobs */}
@@ -45,13 +53,19 @@ export default function StatsCard({
         >
           {icon}
         </div>
-        <div
-          className="flex items-center gap-1 font-jakarta text-[10px] font-semibold px-2.5 py-1 rounded-full"
-          style={{ background: bg, color: accent }}
-        >
-          {isUp ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
-          {percentage}
-        </div>
+
+        {/* Percentage badge with loading state */}
+        {isLoading ? (
+          <div className="w-16 h-6 rounded-full bg-stone-200 animate-pulse" />
+        ) : (
+          <div
+            className="flex items-center gap-1 font-jakarta text-[10px] font-semibold px-2.5 py-1 rounded-full"
+            style={{ background: bg, color: accent }}
+          >
+            {isUp ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
+            {Math.abs(Number(safePercentage))}%
+          </div>
+        )}
       </div>
 
       {/* Title */}
@@ -59,34 +73,57 @@ export default function StatsCard({
         {title}
       </p>
 
-      {/* Primary stat */}
-      <p
-        className="font-playfair text-3xl font-semibold leading-none mb-4"
-        style={{ color: accent }}
-      >
-        {stats[0].value}
-        <span className="font-jakarta text-sm font-normal text-stone-400 ml-1.5">
-          {stats[0].label}
-        </span>
-      </p>
+      {/* Primary stat with loading state */}
+      {isLoading ? (
+        <div className="h-9 w-32 bg-stone-200 rounded animate-pulse mb-4" />
+      ) : (
+        <p
+          className="font-playfair text-3xl font-semibold leading-none mb-4"
+          style={{ color: accent }}
+        >
+          {primaryStat?.value ?? "0"}
+          <span className="font-jakarta text-sm font-normal text-stone-400 ml-1.5">
+            {primaryStat?.lable ?? ""}
+          </span>
+        </p>
+      )}
 
       {/* Divider */}
       <div className="h-px bg-stone-100 mb-3.5" />
 
       {/* Secondary stats + sparkline */}
       <div className="flex items-center justify-between">
-        {stats.slice(1).map((s) => (
-          <div key={s.label}>
-            <p className="font-playfair text-lg font-medium text-stone-700">
-              {s.value}
-            </p>
-            <p className="font-jakarta text-[10px] text-stone-400 mt-0.5">
-              {s.label}
+        {isLoading ? (
+          <>
+            <div className="space-y-1">
+              <div className="h-5 w-12 bg-stone-200 rounded animate-pulse" />
+              <div className="h-3 w-16 bg-stone-200 rounded animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              <div className="h-5 w-12 bg-stone-200 rounded animate-pulse" />
+              <div className="h-3 w-16 bg-stone-200 rounded animate-pulse" />
+            </div>
+          </>
+        ) : secondaryStats.length > 0 ? (
+          secondaryStats.map((s, index) => (
+            <div key={`${s.lable}-${index}`}>
+              <p className="font-playfair text-lg font-medium text-stone-700">
+                {s.value ?? "0"}
+              </p>
+              <p className="font-jakarta text-[10px] text-stone-400 mt-0.5">
+                {s.lable ?? "N/A"}
+              </p>
+            </div>
+          ))
+        ) : (
+          <div>
+            <p className="font-jakarta text-xs text-stone-400">
+              No data available
             </p>
           </div>
-        ))}
+        )}
 
-        {/* Mini sparkline */}
+        {/* Mini sparkline - always visible */}
         <div className="flex items-end gap-0.5 h-6">
           {[40, 65, 50, 80, 60, 90, 75].map((h, i) => (
             <div

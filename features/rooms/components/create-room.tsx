@@ -8,26 +8,25 @@ import {
 import { RoomCategoryType } from "@/features/rooms/types/types";
 import { useUIContext } from "@/context/ui-context";
 import { AxiosError } from "axios";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { BedDouble, Layers, Sparkles, X, Check, ImagePlus } from "lucide-react";
+import { clearError } from "@/components/helper/input";
 
 interface CreateRoomProps {
   accentColor: string;
   onCancel?: () => void;
+  categoryId?: string;
+  categoryName?: string;
 }
 
-interface RoomCategory {
-  id: string;
-  name: string;
-}
-
-function CreateRoom({ accentColor, onCancel }: CreateRoomProps) {
+function CreateRoom({ onCancel, categoryName, categoryId }: CreateRoomProps) {
   const { data } = useGetRoomTypes();
   const { mutate: createRoom, isPending, isSuccess } = useCreateRoom();
   const { setToastMessage, setToastType } = useUIContext();
 
   const [form, setForm] = useState({
     roomNumber: "",
-    categoryId: "",
+    categoryId: categoryId ? categoryId : "",
     floor: "",
     amenities: "",
     images: [] as File[],
@@ -44,10 +43,10 @@ function CreateRoom({ accentColor, onCancel }: CreateRoomProps) {
 
   const MAX_IMAGES = 6;
 
-  const roomCategories: RoomCategory[] = useMemo(() => {
+  const roomCategories = useMemo(() => {
     return (
       data?.data?.roomTypes?.map((room: RoomCategoryType) => ({
-        id: room._id,
+        id: room.id,
         name: `${room.type} Room`,
       })) || []
     );
@@ -55,17 +54,15 @@ function CreateRoom({ accentColor, onCancel }: CreateRoomProps) {
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
-
     if (!form.roomNumber.trim())
-      newErrors.roomNumber = "Room number is required";
-    if (!form.categoryId) newErrors.categoryId = "Room category is required";
-    if (!form.floor.trim()) newErrors.floor = "Floor is required";
+      newErrors.roomNumber = "Room number is required.";
+    if (!form.categoryId) newErrors.categoryId = "Please select a category.";
+    if (!form.floor.trim()) newErrors.floor = "Floor is required.";
     else if (isNaN(Number(form.floor)))
-      newErrors.floor = "Floor must be a number";
-    if (!form.amenities.trim()) newErrors.amenities = "Amenities are required";
+      newErrors.floor = "Floor must be a number.";
+    if (!form.amenities.trim()) newErrors.amenities = "Amenities are required.";
     if (form.images.length === 0)
-      newErrors.images = "At least one image is required";
-
+      newErrors.images = "Upload at least one image.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -74,20 +71,18 @@ function CreateRoom({ accentColor, onCancel }: CreateRoomProps) {
     if (!validateForm()) return;
 
     const formData = new FormData();
-
     formData.append("roomNumber", form.roomNumber);
     formData.append("categoryId", form.categoryId);
     formData.append("floor", form.floor);
     formData.append("amenities", form.amenities);
     formData.append("isAvailable", String(form.isAvailable));
     formData.append("status", form.isAvailable ? "available" : "maintenance");
-
-    form.images.forEach((file) => {
-      formData.append("images", file);
-    });
+    form.images.forEach((file) => formData.append("images", file));
 
     createRoom(formData, {
       onSuccess: () => {
+        setToastMessage("Room created successfully!");
+        setToastType("success");
         setForm({
           roomNumber: "",
           categoryId: "",
@@ -97,283 +92,309 @@ function CreateRoom({ accentColor, onCancel }: CreateRoomProps) {
           isAvailable: true,
         });
         setErrors({});
-        setTimeout(() => {
-          onCancel?.();
-        }, 3000);
+        setTimeout(() => onCancel?.(), 1500);
       },
       onError: (error: unknown) => {
-        console.error("Create room failed", error);
         const apiError = (error as AxiosError<{ message: string }>)?.response
           ?.data;
-        console.log(apiError);
-        if (apiError) {
-          setToastMessage(apiError?.message);
-          setToastType("error");
-          onCancel?.();
-        }
+        setToastMessage(apiError?.message ?? "Something went wrong.");
+        setToastType("error");
       },
     });
   };
 
-  const clearError = (field: keyof typeof errors) => {
-    setErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
+  useEffect(() => {
+    console.log("category id is available to me", categoryId);
+  }, [categoryId]);
+
+  /* ── Success ── */
+  if (isSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 gap-4">
+        <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
+          <Check size={28} className="text-amber-600" />
+        </div>
+        <p className="font-playfair text-xl text-stone-800">Room Created!</p>
+        <p className="font-jakarta text-sm text-stone-400">
+          Closing in a moment…
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-5">
-      {!isSuccess ? (
-        <>
-          <h2
-            className="text-xl text-black text-center font-semibold"
-            style={{ color: accentColor }}
-          >
-            Create Room
+    <div className="font-jakarta space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-jakarta text-[10px] uppercase tracking-widest text-amber-500 mb-1">
+            Rooms
+          </p>
+          <h2 className="font-playfair text-stone-800 text-xl">
+            {categoryName
+              ? `Create Room for ${categoryName} category`
+              : "Create Room"}
           </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-300 hover:bg-stone-50 hover:text-stone-500 transition-all"
+        >
+          <X size={16} />
+        </button>
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Input
-                label="Room Number"
-                placeholder="101"
-                value={form.roomNumber}
-                accentColor={accentColor}
-                onFocus={() => clearError("roomNumber")}
-                onChange={(e) =>
-                  setForm({ ...form, roomNumber: e.target.value })
-                }
-              />
-              {errors.roomNumber && (
-                <p className="text-xs text-red-500">{errors.roomNumber}</p>
-              )}
-            </div>
-
-            <div>
-              <Select
-                label="Room Category"
+      {/* Row 1 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field
+          label="Room Number"
+          placeholder="101"
+          value={form.roomNumber}
+          icon={<BedDouble size={14} />}
+          error={errors.roomNumber}
+          onFocus={() => clearError(setErrors, "roomNumber")}
+          onChange={(e) => setForm({ ...form, roomNumber: e.target.value })}
+        />
+        {categoryId === "" && (
+          <div>
+            <label className="font-jakarta text-[10px] uppercase tracking-widest text-stone-400 block mb-1.5">
+              Room Category
+            </label>
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
+                <Layers size={14} />
+              </div>
+              <select
                 value={form.categoryId}
-                accentColor={accentColor}
-                onFocus={() => clearError("categoryId")}
+                onFocus={() => clearError(setErrors, "categoryId")}
                 onChange={(e) =>
                   setForm({ ...form, categoryId: e.target.value })
                 }
+                className={`ob-input w-full font-jakarta text-sm text-stone-700 bg-amber-50/40 border rounded-xl pl-9 pr-4 py-2.5 transition-all appearance-none ${
+                  errors.categoryId
+                    ? "border-red-300 bg-red-50/30"
+                    : "border-stone-200"
+                }`}
               >
                 <option value="">Select category</option>
-                {roomCategories.map((cat) => (
+                {roomCategories.map((cat: { id: string; name: string }) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
-              </Select>
-              {errors.categoryId && (
-                <p className="text-xs text-red-500">{errors.categoryId}</p>
-              )}
+              </select>
             </div>
+            {errors.categoryId && <FieldError msg={errors.categoryId} />}
           </div>
+        )}
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Input
-                label="Floor"
-                placeholder="1"
-                value={form.floor}
-                accentColor={accentColor}
-                onFocus={() => clearError("floor")}
-                onChange={(e) => setForm({ ...form, floor: e.target.value })}
-              />
-              {errors.floor && (
-                <p className="text-xs text-red-500">{errors.floor}</p>
-              )}
-            </div>
+      {/* Row 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field
+          label="Floor"
+          placeholder="1"
+          value={form.floor}
+          icon={<Layers size={14} />}
+          error={errors.floor}
+          onFocus={() => clearError(setErrors, "floor")}
+          onChange={(e) => setForm({ ...form, floor: e.target.value })}
+        />
+        <Field
+          label="Amenities"
+          placeholder="AC, WiFi, Balcony"
+          value={form.amenities}
+          icon={<Sparkles size={14} />}
+          error={errors.amenities}
+          onFocus={() => clearError(setErrors, "amenities")}
+          onChange={(e) => setForm({ ...form, amenities: e.target.value })}
+        />
+      </div>
 
-            <div>
-              <Input
-                label="Amenities"
-                placeholder="AC, WiFi, Balcony"
-                value={form.amenities}
-                accentColor={accentColor}
-                onFocus={() => clearError("amenities")}
-                onChange={(e) =>
-                  setForm({ ...form, amenities: e.target.value })
-                }
-              />
-              {errors.amenities && (
-                <p className="text-xs text-red-500">{errors.amenities}</p>
-              )}
-            </div>
+      {/* Image upload */}
+      <div className="space-y-2">
+        <label className="font-jakarta text-[10px] uppercase tracking-widest text-stone-400 block">
+          Room Images
+        </label>
+        <label
+          className={`flex items-center gap-3 bg-amber-50/40 border border-dashed rounded-2xl px-4 py-3.5 cursor-pointer hover:border-amber-300 hover:bg-amber-50 transition-all ${
+            errors.images ? "border-red-300" : "border-stone-200"
+          }`}
+        >
+          <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 flex-shrink-0">
+            <ImagePlus size={15} />
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Room Images
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="file-input file-input-neutral text-black w-full rounded-[10px]"
-              onFocus={() => clearError("images")}
-              onChange={(e) => {
-                const files = Array.from(e.target.files || []);
-                const remaining = MAX_IMAGES - form.images.length;
-                if (remaining <= 0) return;
-
-                setForm((prev) => ({
-                  ...prev,
-                  images: [...prev.images, ...files.slice(0, remaining)],
-                }));
-              }}
-            />
-            <p className="text-xs text-gray-500">
-              Upload up to {MAX_IMAGES} images
+          <div>
+            <p className="font-jakarta text-sm text-stone-600 font-medium">
+              Click to upload images
             </p>
-            {errors.images && (
-              <p className="text-xs text-red-500">{errors.images}</p>
-            )}
+            <p className="font-jakarta text-xs text-stone-400">
+              Up to {MAX_IMAGES} images · JPG, PNG
+            </p>
           </div>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onFocus={() => clearError(setErrors, "images")}
+            onChange={(e) => {
+              const files = Array.from(e.target.files || []);
+              const remaining = MAX_IMAGES - form.images.length;
+              if (remaining <= 0) return;
+              setForm((prev) => ({
+                ...prev,
+                images: [...prev.images, ...files.slice(0, remaining)],
+              }));
+            }}
+          />
+        </label>
+        {errors.images && <FieldError msg={errors.images} />}
+      </div>
 
-          {form.images.length > 0 && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {form.images.map((file, index) => {
-                const previewUrl = URL.createObjectURL(file);
-                return (
-                  <div
-                    key={index}
-                    className="relative rounded-lg overflow-hidden border"
-                  >
-                    <img
-                      src={previewUrl}
-                      alt="Room"
-                      className="h-24 w-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setForm((prev) => ({
-                          ...prev,
-                          images: prev.images.filter((_, i) => i !== index),
-                        }))
-                      }
-                      className="absolute top-1 right-1 rounded-full bg-black/60 px-2 py-1 text-xs text-white hover:bg-black"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {/* Availability */}
-          <div className="flex items-center justify-between rounded-[10px] border border-gray-300 px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-gray-700">
-                Room Availability
-              </p>
-              <p className="text-xs text-gray-500">
-                Enable if this room can be booked
-              </p>
-            </div>
-
-            <input
-              type="checkbox"
-              className="toggle toggle-md"
-              checked={form.isAvailable}
-              onChange={(e) =>
-                setForm({ ...form, isAvailable: e.target.checked })
-              }
-              style={{
-                backgroundColor: form.isAvailable ? accentColor : "#f6ecff",
-                borderColor: accentColor,
-              }}
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              className="btn text-black hover:text-white hover:bg-black border-gray-300 rounded-[10px]"
-              onClick={onCancel}
+      {/* Image previews */}
+      {form.images.length > 0 && (
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {form.images.map((file, index) => (
+            <div
+              key={index}
+              className="relative rounded-xl overflow-hidden border border-stone-100 group"
             >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              disabled={isPending}
-              className="btn text-white bg-black hover:opacity-80 rounded-[10px] border-none"
-              style={{ backgroundColor: accentColor }}
-              onClick={handleSubmit}
-            >
-              Create Room
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <img alt="" src="/success.webp" />
-          <p className="text-center text-xl text-[#fe69b5] font-semibold -mt-[15px]">
-            Room Created SuccessFully
-          </p>
-        </>
+              <img
+                src={URL.createObjectURL(file)}
+                alt="Room"
+                className="h-20 w-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    images: prev.images.filter((_, i) => i !== index),
+                  }))
+                }
+                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* Availability toggle */}
+      <div className="flex items-center justify-between bg-amber-50/50 border border-amber-100 rounded-2xl px-4 py-3.5">
+        <div>
+          <p className="font-jakarta text-sm font-medium text-stone-700">
+            Room Availability
+          </p>
+          <p className="font-jakarta text-xs text-stone-400 mt-0.5">
+            Enable if this room can be booked
+          </p>
+        </div>
+        <div
+          onClick={() => setForm({ ...form, isAvailable: !form.isAvailable })}
+          className={`w-11 h-6 rounded-full cursor-pointer transition-all relative flex-shrink-0 ${
+            form.isAvailable ? "bg-amber-500" : "bg-stone-200"
+          }`}
+        >
+          <div
+            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all ${
+              form.isAvailable ? "left-5" : "left-0.5"
+            }`}
+          />
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="font-jakarta text-sm text-stone-400 border border-stone-200 bg-white px-5 py-2.5 rounded-xl hover:border-stone-300 hover:text-stone-600 transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isPending}
+          className="btn-shine font-jakarta text-sm font-medium px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-100 hover:opacity-95 transition-all flex items-center gap-2"
+        >
+          {isPending && (
+            <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          )}
+          Create Room
+        </button>
+      </div>
     </div>
   );
 }
 
 export default CreateRoom;
 
-/* ---------- Reusable Components ---------- */
+// ── Reusable Field ────────────────────────────────────────────────────────────
 
-function Input({
+function Field({
   label,
-  accentColor,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
+  placeholder,
+  value,
+  onChange,
+  onFocus,
+  icon,
+  error,
+}: {
   label: string;
-  accentColor?: string;
+  placeholder?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFocus?: () => void;
+  icon?: React.ReactNode;
+  error?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <input
-        {...props}
-        className="input input-bordered bg-white text-black rounded-[10px]
-          border-gray-300 focus:outline-none focus:border-transparent
-          focus:ring-2 focus:ring-offset-1"
-        style={
-          accentColor
-            ? ({ "--tw-ring-color": accentColor } as React.CSSProperties)
-            : undefined
-        }
-      />
+    <div>
+      <label className="font-jakarta text-[10px] uppercase tracking-widest text-stone-400 block mb-1.5">
+        {label}
+      </label>
+      <div className="relative">
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
+            {icon}
+          </div>
+        )}
+        <input
+          value={value}
+          onChange={onChange}
+          onFocus={onFocus}
+          placeholder={placeholder}
+          className={`ob-input w-full font-jakarta text-sm text-stone-700 placeholder-stone-300 bg-amber-50/40 border rounded-xl py-2.5 pr-4 transition-all ${
+            icon ? "pl-9" : "pl-4"
+          } ${error ? "border-red-300 bg-red-50/30" : "border-stone-200"}`}
+        />
+      </div>
+      {error && <FieldError msg={error} />}
     </div>
   );
 }
 
-function Select({
-  label,
-  accentColor,
-  children,
-  ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement> & {
-  label: string;
-  accentColor?: string;
-}) {
+function FieldError({ msg }: { msg: string }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <select
-        {...props}
-        className="select select-bordered bg-white text-black rounded-[10px]
-          border-gray-300 focus:outline-none focus:border-transparent
-          focus:ring-2 focus:ring-offset-1"
-        style={
-          accentColor
-            ? ({ "--tw-ring-color": accentColor } as React.CSSProperties)
-            : undefined
-        }
+    <p className="font-jakarta text-[10px] text-red-500 mt-1 flex items-center gap-1">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        className="w-3 h-3 flex-shrink-0"
       >
-        {children}
-      </select>
-    </div>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      {msg}
+    </p>
   );
 }

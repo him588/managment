@@ -1,89 +1,58 @@
 "use client";
-
 import CreateCard from "./components/create-card";
 import { BedDouble, BookKey, Plus } from "lucide-react";
-import { useState } from "react";
-import Modal from "@/components/common/modal";
-import CreateRoom from "./components/create-room";
-import CreateCategory from "./components/create-category";
-import BookRoom from "./components/book-room";
 import RoomAvailabilityGrid from "./components/room-availabilty";
 import RoomCategory from "./components/room-category";
 import RoomList from "./components/room-list";
+import { useRoomsContext } from "@/context/room-context";
 
 function Rooms() {
-  const [currentModal, setCurrentModal] = useState<
-    null | "createCategory" | "createRoom" | "BookRoom"
-  >(null);
-  console.log(new Date());
+  const { setCurrentModal } = useRoomsContext();
 
   return (
     <section className="w-full h-full outline-none p-6">
       {/* Create Cards */}
-      <div className=" flex  gap-[1rem]">
+      <div className="flex gap-4">
         <CreateCard
           title="Create room type"
           description="Add a new room category"
           icon={Plus}
-          accentColor="#16a34a"
+          accentColor="#059669"
           backgroundColor="#ecfdf5"
           onClick={() => setCurrentModal("createCategory")}
         />
-
         <CreateCard
           title="Create room"
           description="Add a new room"
           icon={BedDouble}
-          accentColor="#6b5c85"
-          backgroundColor="#f6ecff"
+          accentColor="#92400e"
+          backgroundColor="#f5f0eb"
           onClick={() => setCurrentModal("createRoom")}
         />
-
         <CreateCard
           title="Book room"
-          description="Add a new room"
+          description="Book a reservation"
           icon={BookKey}
-          accentColor="#6b4b5c"
-          backgroundColor="#ffe6f7"
+          accentColor="#c2410c"
+          backgroundColor="#fdf4ec"
           onClick={() => setCurrentModal("BookRoom")}
         />
       </div>
 
       {/* Room Categories */}
-      <div className="mt-[3rem]">
+      <div className="mt-12">
         <RoomCategory />
       </div>
 
       {/* Rooms */}
-      <div className="mt-[3rem] overflow-hidden">
+      <div className="mt-12 overflow-hidden">
         <RoomList />
       </div>
 
-      {/* <RoomAvailabilityTimeline /> */}
-      <div className="mt-[3rem] ">
+      {/* Availability Grid */}
+      <div className="mt-12">
         <RoomAvailabilityGrid setCurrentModal={setCurrentModal} />
       </div>
-
-      {currentModal && (
-        <Modal
-          isOpen={currentModal !== null}
-          onClose={() => setCurrentModal(null)}
-          modalBoxClassName=" rounded-[25px] w-[100%] "
-        >
-          {currentModal === "createCategory" && (
-            <CreateCategory
-              accentColor=""
-              onCancel={() => setCurrentModal(null)}
-            />
-          )}
-          {currentModal === "createRoom" && (
-            <CreateRoom accentColor="" onCancel={() => setCurrentModal(null)} />
-          )}
-          {currentModal === "BookRoom" && (
-            <BookRoom accentColor="" onCancel={() => setCurrentModal(null)} />
-          )}
-        </Modal>
-      )}
     </section>
   );
 }

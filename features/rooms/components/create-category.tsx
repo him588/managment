@@ -2,314 +2,327 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Tag, Users, X, IndianRupee } from "lucide-react";
 import { useCreateRoomType } from "@/features/rooms/hooks/use-rooms";
 import { AxiosError } from "axios";
 import { useUIContext } from "@/context/ui-context";
+import { clearError } from "@/components/helper/input";
+import { returnAxiosError } from "@/components/helper/axios";
 
 interface CreateCategoryProps {
   accentColor: string;
   onCancel?: () => void;
 }
 
-const IMAGE_OPTIONS = [
-  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0",
-  "https://images.unsplash.com/photo-1589834390005-5d4fb9bf3d32?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0",
-  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0",
-  "https://images.unsplash.com/photo-1610123172763-1f587473048f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0",
-  "https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0",
-];
-
-function CreateCategory({ accentColor, onCancel }: CreateCategoryProps) {
+function CreateCategory({ onCancel }: CreateCategoryProps) {
   const [form, setForm] = useState({
     type: "",
     price: "",
     maxGuest: "",
-    image: "",
+    color: "#dbc8f7",
     tags: "",
     isShared: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { setToastMessage, setToastType } = useUIContext();
 
-  const {
-    mutateAsync: createRoomType,
-    isPending,
-    isSuccess,
-    isError,
-    error,
-    data,
-  } = useCreateRoomType();
+  const { mutate: createRoomType, isPending, isSuccess } = useCreateRoomType();
 
-  /* ---------------- API Error ---------------- */
-
-  /* ---------------- Auto close on success ---------------- */
-  useEffect(() => {
-    if (isSuccess) {
-      const timer = setTimeout(() => {
-        onCancel?.();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [isSuccess, onCancel]);
-
-  useEffect(() => {
-    const apiError = (error as AxiosError<{ message: string }>)?.response?.data;
-
-    if (isError && apiError?.message) {
-      const timer = setTimeout(() => {
-        setToastMessage(apiError.message);
-        setToastType("error");
-        onCancel?.();
-      }, 0);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isError, error, onCancel, setToastMessage, setToastType]);
-
-  /* ---------------- Validation ---------------- */
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    if (!form.type.trim()) newErrors.type = "Required";
+    if (!form.type.trim()) newErrors.type = "Category name is required.";
     if (!form.price || isNaN(+form.price) || +form.price <= 0)
-      newErrors.price = "Invalid price";
+      newErrors.price = "Enter a valid price.";
     if (!form.maxGuest || isNaN(+form.maxGuest) || +form.maxGuest < 1)
-      newErrors.maxGuest = "Invalid number";
-    if (!form.image) newErrors.image = "Select an image";
-
+      newErrors.maxGuest = "Enter a valid guest count.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  /* ---------------- Submit ---------------- */
   const handleSubmit = () => {
     if (!validateForm()) return;
-
-    const payload = {
-      type: form.type.trim(),
-      price: Number(form.price),
-      maxGuest: Number(form.maxGuest),
-      image: form.image,
-      isShared: form.isShared,
-      tags: form.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-    };
-
-    createRoomType(payload);
+    createRoomType(
+      {
+        type: form.type.trim().toLowerCase(),
+        price: Number(form.price),
+        maxGuest: Number(form.maxGuest),
+        color: form.color,
+        isShared: form.isShared,
+        tags: form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      },
+      {
+        onSuccess: () => {
+          setToastMessage("Room category created successfully!");
+          setToastType("success");
+          setTimeout(() => onCancel?.(), 1500);
+        },
+        onError: (err) => {
+          const error = returnAxiosError(err);
+          setToastMessage(error ?? "Something went wrong.");
+          setToastType("error");
+        },
+      },
+    );
   };
 
-  return (
-    <div className="space-y-6">
-      {!isSuccess ? (
-        <>
-          {/* API Error (same alert UI) */}
+  if (isSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 gap-4">
+        <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
+          <Check size={28} className="text-amber-600" />
+        </div>
+        <p className="font-playfair text-xl text-stone-800">
+          Room Category Created!
+        </p>
+        <p className="font-jakarta text-sm text-stone-400">
+          Closing in a moment…
+        </p>
+      </div>
+    );
+  }
 
-          {/* Title */}
-          <h2
-            className="text-xl text-center text-black font-semibold"
-            style={{ color: accentColor }}
-          >
+  return (
+    <div className="font-jakarta space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-jakarta text-[10px] uppercase tracking-widest text-amber-500 mb-1">
+            Rooms
+          </p>
+          <h2 className="font-playfair text-stone-800 text-xl">
             Create Room Category
           </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-300 hover:bg-stone-50 hover:text-stone-500 transition-all"
+        >
+          <X size={16} />
+        </button>
+      </div>
 
-          {/* Form Fields */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <Input
-                label="Category Name"
-                placeholder="Deluxe, Suite..."
-                value={form.type}
-                accentColor={accentColor}
-                onChange={(e) => {
-                  setForm({ ...form, type: e.target.value });
-                  setErrors({ ...errors, type: "" });
-                }}
-              />
-              {errors.type && (
-                <p className="mt-1 text-xs text-red-500">{errors.type}</p>
+      {/* Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Field
+          label="Category Name"
+          placeholder="Deluxe, Suite…"
+          value={form.type}
+          icon={<Tag size={14} />}
+          error={errors.type}
+          onFocus={() => clearError(setErrors, "type")}
+          onChange={(e) => {
+            setForm({ ...form, type: e.target.value });
+            setErrors({ ...errors, type: "" });
+          }}
+        />
+        <Field
+          label={form.isShared ? "Person per Night" : "Price per Night"}
+          placeholder="4000"
+          value={form.price}
+          icon={<IndianRupee size={14} />}
+          error={errors.price}
+          onFocus={() => clearError(setErrors, "price")}
+          onChange={(e) => {
+            setForm({ ...form, price: e.target.value });
+            setErrors({ ...errors, price: "" });
+          }}
+        />
+        <Field
+          label="Max Guests"
+          placeholder="2"
+          value={form.maxGuest}
+          icon={<Users size={14} />}
+          error={errors.maxGuest}
+          onFocus={() => clearError(setErrors, "maxGuest")}
+          onChange={(e) => {
+            setForm({ ...form, maxGuest: e.target.value });
+            setErrors({ ...errors, maxGuest: "" });
+          }}
+        />
+      </div>
+
+      {/* Color picker */}
+      <div className="space-y-2">
+        <label className="font-jakarta text-[10px] uppercase tracking-widest text-stone-400 block">
+          Category Color
+        </label>
+
+        {/* Preset swatches */}
+        <div className="flex items-center gap-2  flex-wrap">
+          {[
+            "#dbc8f7",
+            "#b2c6f2",
+            "#9cf7c2",
+            "#f6cc99",
+            "#f69ece",
+            "#a3f8e5",
+          ].map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setForm({ ...form, color: c })}
+              className="w-7 h-7 rounded-lg border-2 transition-all hover:scale-110"
+              style={{
+                background: c,
+                borderColor: form.color === c ? c : "transparent",
+                boxShadow: form.color === c ? `0 0 0 3px ${c}30` : "none",
+              }}
+            >
+              {form.color === c && (
+                <Check size={12} className="text-white mx-auto" />
               )}
-            </div>
+            </button>
+          ))}
+        </div>
 
-            <div>
-              <Input
-                label="Price per Night"
-                placeholder="4000"
-                value={form.price}
-                accentColor={accentColor}
-                onChange={(e) => {
-                  setForm({ ...form, price: e.target.value });
-                  setErrors({ ...errors, price: "" });
-                }}
-              />
-              {errors.price && (
-                <p className="mt-1 text-xs text-red-500">{errors.price}</p>
-              )}
-            </div>
-
-            <div>
-              <Input
-                label="Max Guests"
-                placeholder="2"
-                value={form.maxGuest}
-                accentColor={accentColor}
-                onChange={(e) => {
-                  setForm({ ...form, maxGuest: e.target.value });
-                  setErrors({ ...errors, maxGuest: "" });
-                }}
-              />
-              {errors.maxGuest && (
-                <p className="mt-1 text-xs text-red-500">{errors.maxGuest}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Shared toggle */}
-          <div className="flex items-center justify-between rounded-[10px] border border-gray-300 px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-gray-700">Shared Room</p>
-              <p className="text-xs text-gray-500">
-                Enable if this room is shared with other guests
-              </p>
-            </div>
-
-            <input
-              type="checkbox"
-              className="toggle toggle-md shadow-md"
-              checked={form.isShared}
-              onChange={(e) => setForm({ ...form, isShared: e.target.checked })}
-            />
-          </div>
-
-          {/* Image Picker */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Select Room Image
-            </label>
-
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-              {IMAGE_OPTIONS.map((img) => {
-                const isSelected = form.image === img;
-
-                return (
-                  <button
-                    key={img}
-                    type="button"
-                    onClick={() => {
-                      setForm({ ...form, image: img });
-                      setErrors({ ...errors, image: "" });
-                    }}
-                    className={`relative rounded-lg overflow-hidden border-2 transition
-                      ${
-                        isSelected
-                          ? "border-transparent"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    style={
-                      isSelected
-                        ? { boxShadow: `0 0 0 2px ${accentColor}` }
-                        : undefined
-                    }
-                  >
-                    <img
-                      src={img}
-                      alt="Room"
-                      className="h-20 w-full object-cover"
-                    />
-
-                    {isSelected && (
-                      <span
-                        className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full text-white"
-                        style={{ backgroundColor: accentColor }}
-                      >
-                        <Check size={14} />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {errors.image && (
-              <p className="text-xs text-red-500">{errors.image}</p>
-            )}
-          </div>
-
-          {/* Tags */}
-          <Input
-            label="Tags"
-            placeholder="AC, Balcony, Sea View"
-            value={form.tags}
-            accentColor={accentColor}
-            onChange={(e) => setForm({ ...form, tags: e.target.value })}
+        {/* Live preview */}
+        <div
+          className="flex items-center gap-3 rounded-2xl px-4 py-3 border mt-2"
+          style={{
+            background: `${form.color}10`,
+            borderColor: `${form.color}`,
+          }}
+        >
+          <div
+            className="w-8 h-8 rounded-xl flex-shrink-0"
+            style={{
+              background: `linear-gradient(135deg, ${form.color}cc, ${form.color})`,
+            }}
           />
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              className="btn bg-transparent input-bordered  shadow-lg   rounded-[10px] text-gray-700  hover:bg-black hover:text-white"
-              onClick={onCancel}
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="btn text-white rounded-[10px] bg-black shadow-lg border-none hover:opacity-80"
-              style={{ backgroundColor: accentColor }}
-            >
-              {isPending && (
-                <span className="loading loading-spinner loading-sm"></span>
-              )}
-              Create Category
-            </button>
+          <div className="flex-1 min-w-0">
+            <p className="font-playfair text-sm text-stone-700 truncate">
+              {form.type || "Category Name"}
+            </p>
+            <div className="flex gap-1.5 flex-wrap mt-1">
+              {(form.tags || "AC, Balcony")
+                .split(",")
+                .filter(Boolean)
+                .slice(0, 4)
+                .map((tag, i) => (
+                  <span
+                    key={i}
+                    className="font-jakarta text-[9px] px-2 py-0.5 rounded-full font-medium"
+                    style={{
+                      background: `${form.color}20`,
+                      color: form.color,
+                    }}
+                  >
+                    {tag.trim()}
+                  </span>
+                ))}
+            </div>
           </div>
-        </>
-      ) : (
-        <>
-          <img alt="" src="/success.webp" />
-          <p className="text-center text-xl text-[#fe69b5] font-semibold -mt-[15px]">
-            Room Category Created SuccessFully
+          <p
+            className="font-playfair text-lg flex items-center justify-center font-medium flex-shrink-0"
+            style={{ color: form.color }}
+          >
+            <IndianRupee size={14} />
+            {form.price || "0"}
           </p>
-        </>
-      )}
+        </div>
+      </div>
+
+      {/* Tags */}
+      <Field
+        label="Tags"
+        placeholder="AC, Balcony, Sea View"
+        value={form.tags}
+        icon={<Tag size={14} />}
+        onChange={(e) => setForm({ ...form, tags: e.target.value })}
+      />
+
+      {/* Actions */}
+      <div className="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="font-jakarta text-sm text-stone-400 border border-stone-200 bg-white px-5 py-2.5 rounded-xl hover:border-stone-300 hover:text-stone-600 transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isPending}
+          className="btn-shine font-jakarta text-sm font-medium px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-100 hover:opacity-95 transition-all flex items-center gap-2"
+        >
+          {isPending && (
+            <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          )}
+          Create Category
+        </button>
+      </div>
     </div>
   );
 }
 
 export default CreateCategory;
 
-/* ---------- Reusable Input ---------- */
+// ── Reusable Field ──────────────────────────────────────────────────────────
 
-function Input({
+function Field({
   label,
-  accentColor,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
+  placeholder,
+  value,
+  onChange,
+  icon,
+  error,
+  onFocus,
+}: {
   label: string;
-  accentColor?: string;
+  placeholder?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  icon?: React.ReactNode;
+  error?: string;
+  onFocus?: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <input
-        {...props}
-        className="input input-bordered bg-white text-black rounded-[10px]
-          border-gray-300
-          focus:outline-none
-          focus:border-transparent
-          focus:ring-2
-          focus:ring-offset-1"
-        style={
-          accentColor
-            ? ({ "--tw-ring-color": accentColor } as React.CSSProperties)
-            : undefined
-        }
-      />
+    <div>
+      <label className="font-jakarta text-[10px] uppercase tracking-widest text-stone-400 block mb-1.5">
+        {label}
+      </label>
+      <div className="relative">
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
+            {icon}
+          </div>
+        )}
+        <input
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          onFocus={() => onFocus?.()}
+          className={`ob-input w-full font-jakarta text-sm text-stone-700 placeholder-stone-300 bg-amber-50/40 border rounded-xl py-2.5 pr-4 transition-all ${
+            icon ? "pl-9" : "pl-4"
+          } ${error ? "border-red-300 bg-red-50/30" : "border-stone-200"}`}
+        />
+      </div>
+      {error && <FieldError msg={error} />}
     </div>
+  );
+}
+
+function FieldError({ msg }: { msg: string }) {
+  return (
+    <p className="font-jakarta text-[10px] text-red-500 mt-1 flex items-center gap-1">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        className="w-3 h-3 flex-shrink-0"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      {msg}
+    </p>
   );
 }

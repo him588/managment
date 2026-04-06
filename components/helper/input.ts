@@ -38,3 +38,10 @@ export function handleChangeTextarea<T extends object>(
     });
   }
 }
+
+export function clearError(
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+  key: string,
+) {
+  setErrors((prev) => ({ ...prev, [key]: "" }));
+}

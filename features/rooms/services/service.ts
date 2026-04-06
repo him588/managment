@@ -20,8 +20,21 @@ export async function createRoom(formData: FormData) {
   });
 }
 
-export async function getRooms(hotelId?: string) {
-  return apiClient.get(`/room/get-rooms?id=${hotelId ? hotelId : ""}`, {});
+// API - Fixed: Cleaner parameter handling
+export async function getRooms(
+  hotelId?: string,
+  categoryId?: string,
+  pageSize: number = 10,
+  pageNumber: number = 1,
+) {
+  const params = new URLSearchParams();
+
+  if (hotelId) params.append("id", hotelId);
+  if (categoryId) params.append("categoryId", categoryId);
+  params.append("pageSize", pageSize.toString());
+  params.append("pageNumber", pageNumber.toString());
+
+  return apiClient.get(`/room/get-rooms?${params.toString()}`, {});
 }
 
 export async function getRoomStatus() {

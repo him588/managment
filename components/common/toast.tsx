@@ -13,7 +13,7 @@ export function Toast({
 
   return (
     <div
-      className={`inline-flex items-center gap-2.5 fixed z-50 left-1/2 -translate-x-1/2 
+      className={`inline-flex items-center gap-2.5 fixed z-[999] left-1/2 -translate-x-1/2 
         px-4 py-2.5 rounded-2xl border shadow-lg shadow-stone-200/60 font-jakarta  translate-all duration-200
         ${
           isSuccess

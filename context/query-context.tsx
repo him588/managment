@@ -1,5 +1,6 @@
 "use client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export function QueryContextProvider({
   children,
@@ -11,11 +12,17 @@ export function QueryContextProvider({
       queries: {
         retry: 2,
         retryDelay: 300,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false, // Don't refetch on mount if fresh
       },
     },
   });
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools initialIsOpen={false} />
+
+      {children}
+    </QueryClientProvider>
   );
 }
