@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useUIContext } from "@/context/ui-context";
 import { returnAxiosError } from "@/components/helper/axios";
+import { useRoomsContext } from "@/context/room-context";
 
 dayjs.extend(isSameOrBefore);
 
@@ -40,6 +41,7 @@ function BookRoom({ onCancel }: BookRoomProps) {
   const { mutate, isPending, isSuccess } = useBookRoom();
   const { data } = useGetRoomTypes();
   const { setToastType, setToastMessage } = useUIContext();
+  const { selectedCategory } = useRoomsContext();
 
   const roomTypes = useMemo(() => {
     return (
@@ -74,7 +76,7 @@ function BookRoom({ onCancel }: BookRoomProps) {
     if (!form.email && !/^\S+@\S+\.\S+$/.test(form.email))
       newErrors.email = "Enter a valid email address.";
 
-    if (!form.categoryId)
+    if (!form.categoryId && selectedCategory.categoryId === "")
       newErrors.categoryId = "Please select a room category.";
 
     if (!form.checkIn) newErrors.checkIn = "Check-in date is required.";
@@ -93,16 +95,25 @@ function BookRoom({ onCancel }: BookRoomProps) {
   }
 
   function handleSubmit() {
+    console.log("sumit works");
     if (!validateForm()) return;
-    mutate(form, {
-      onError: (error) => {
-        console.log(error);
-        const err = returnAxiosError(error);
-        console.log(err);
-        setToastType("error");
-        setToastMessage(err);
+    console.log("sumit still works");
+
+    const categoryId = selectedCategory.categoryId
+      ? selectedCategory.categoryId
+      : form.categoryId;
+    mutate(
+      { ...form, categoryId: categoryId },
+      {
+        onError: (error) => {
+          console.log(error);
+          const err = returnAxiosError(error);
+          console.log(err);
+          setToastType("error");
+          setToastMessage(err);
+        },
       },
-    });
+    );
   }
 
   const nights =
@@ -135,7 +146,11 @@ function BookRoom({ onCancel }: BookRoomProps) {
           <p className="font-jakarta text-[10px] uppercase tracking-widest text-amber-500 mb-1">
             Reservations
           </p>
-          <h2 className="font-playfair text-stone-800 text-xl">Book Room</h2>
+          <h2 className="font-playfair text-stone-800 text-xl">
+            {selectedCategory.categoryName
+              ? `Book room for ${selectedCategory.categoryName.toLowerCase()} category`
+              : "Book Room"}
+          </h2>
         </div>
         <button
           type="button"
@@ -185,52 +200,6 @@ function BookRoom({ onCancel }: BookRoomProps) {
       <div>
         <SectionLabel>Booking details</SectionLabel>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
-          {/* Room category select */}
-          <div>
-            <FieldLabel>Room Category</FieldLabel>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
-                <BedDouble size={14} />
-              </div>
-              <select
-                value={form.categoryId}
-                onFocus={() => clearError(setErrors, "categoryId")}
-                onChange={(e) =>
-                  setForm({ ...form, categoryId: e.target.value })
-                }
-                className={`ob-input w-full font-jakarta text-sm text-stone-700 bg-amber-50/40 border rounded-xl pl-9 pr-4 py-2.5 transition-all appearance-none ${
-                  errors.categoryId
-                    ? "border-red-300 bg-red-50/30"
-                    : "border-stone-200"
-                }`}
-              >
-                <option value="">Select category</option>
-                {roomTypes.map((cat: { id: string; name: string }) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {errors.categoryId && <FieldError msg={errors.categoryId} />}
-          </div>
-
-          {/* Guests */}
-          <Field
-            label="Number of Guests"
-            type="number"
-            min={1}
-            placeholder="1"
-            value={String(form.guests)}
-            icon={<Users size={14} />}
-            error={errors.guests}
-            onFocus={() => clearError(setErrors, "guests")}
-            onChange={(e) =>
-              setForm({ ...form, guests: Number(e.target.value) })
-            }
-          />
-
-          {/* Dates */}
           <Field
             label="Check-in Date"
             type="date"
@@ -249,6 +218,54 @@ function BookRoom({ onCancel }: BookRoomProps) {
             onFocus={() => clearError(setErrors, "checkOut")}
             onChange={(e) => setForm({ ...form, checkOut: e.target.value })}
           />
+          {/* Room category select */}
+          {!selectedCategory.categoryId && (
+            <div>
+              <FieldLabel>Room Category</FieldLabel>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
+                  <BedDouble size={14} />
+                </div>
+                <select
+                  value={form.categoryId}
+                  onFocus={() => clearError(setErrors, "categoryId")}
+                  onChange={(e) =>
+                    setForm({ ...form, categoryId: e.target.value })
+                  }
+                  className={`ob-input w-full font-jakarta text-sm text-stone-700 bg-amber-50/40 border rounded-xl pl-9 pr-4 py-2.5 transition-all appearance-none ${
+                    errors.categoryId
+                      ? "border-red-300 bg-red-50/30"
+                      : "border-stone-200"
+                  }`}
+                >
+                  <option value="">Select category</option>
+                  {roomTypes.map((cat: { id: string; name: string }) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.categoryId && <FieldError msg={errors.categoryId} />}
+            </div>
+          )}
+
+          {/* Guests */}
+          <Field
+            label="Number of Guests"
+            type="number"
+            min={1}
+            placeholder="1"
+            value={String(form.guests)}
+            icon={<Users size={14} />}
+            error={errors.guests}
+            onFocus={() => clearError(setErrors, "guests")}
+            onChange={(e) =>
+              setForm({ ...form, guests: Number(e.target.value) })
+            }
+          />
+
+          {/* Dates */}
         </div>
       </div>
 
@@ -318,11 +335,13 @@ function Field({
   label,
   icon,
   error,
+  readonly = false,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   icon?: React.ReactNode;
   error?: string;
+  readonly?: boolean;
 }) {
   return (
     <div>
@@ -335,6 +354,7 @@ function Field({
         )}
         <input
           {...props}
+          readOnly={readonly}
           className={`ob-input w-full font-jakarta text-sm text-stone-700 placeholder-stone-300 bg-amber-50/40 border rounded-xl py-2.5 pr-4 transition-all
             ${icon ? "pl-9" : "pl-4"}
             ${error ? "border-red-300 bg-red-50/30" : "border-stone-200"}

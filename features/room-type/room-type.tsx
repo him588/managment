@@ -5,8 +5,6 @@ import {
   useRoomStatusByRoomId,
   useRoomTypeDetails,
 } from "@/features/room-type/hooks/hook";
-import RoomTypeDetailPage from "./components/room-page";
-import SearchBar from "@/components/common/search-bar";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { RoomInfoType } from "./types/type";
@@ -30,7 +28,6 @@ function RoomType({ id }: { id: string }) {
     mantainanceRooms: "",
     rooms: [],
   });
-  const [search, setSearch] = useState("");
   const router = useRouter();
   useEffect(() => {
     const res = data?.data?.roomType;
@@ -48,8 +45,11 @@ function RoomType({ id }: { id: string }) {
         (room: { status: string }) => room.status === "maintenance",
       );
 
+      console.log("room count", res.roomCount);
+      console.log("aval rooms", availableRooms);
+
       const totalPercentage =
-        res.roomCount > 0 ? (availableRooms.length / res.roomCount) * 100 : 0;
+        res.roomCount > 0 ? (bookedRooms.length / res.roomCount) * 100 : 0;
 
       const rooms = status.map(
         (room: {
@@ -69,6 +69,8 @@ function RoomType({ id }: { id: string }) {
         },
       );
 
+      console.log("total percentage", totalPercentage);
+
       setTypeDetails((prev) => ({
         ...prev,
         roomTypeId: res.roomTypeId,
@@ -86,10 +88,6 @@ function RoomType({ id }: { id: string }) {
     }
   }, [data, roomStatus]);
 
-  useEffect(() => {
-    console.log(typeDetails);
-  }, [typeDetails]);
-
   return (
     <section>
       <div className="flex items-center gap-[1rem] px-[1rem]">
@@ -100,11 +98,6 @@ function RoomType({ id }: { id: string }) {
           <ChevronLeft size={20} />
           Back
         </button>
-        <SearchBar
-          value={search}
-          onChange={(e) => setSearch(e)}
-          placeholder="Search By Room Number ..."
-        />
       </div>
       <div className="p-[1.4rem] flex flex-col gap-[2rem]">
         <RoomTypeInfo detail={typeDetails} />

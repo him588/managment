@@ -7,3 +7,12 @@ export function getRoomTypeDetails(id: string) {
 export async function getRoomStatusById(id: string) {
   return apiClient.get(`/room/get-room-status/room-type/${id}`);
 }
+
+export function updateRoomType(data: {
+  id: string;
+  type: string;
+  price: number;
+  maxGuest: number;
+}) {
+  return apiClient.put(`/room/update-room-type`, { ...data });
+}

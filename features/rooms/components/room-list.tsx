@@ -9,6 +9,7 @@ import Shimmer from "@/components/common/shimmer";
 import { Room, RoomCategoryType } from "@/features/rooms/types/types";
 import DropDown from "@/components/common/drop-down";
 import { PAGE_SIZE } from "@/components/types/const";
+import { useRouter } from "next/navigation";
 
 function RoomList() {
   const { data: roomTypes } = useGetRoomTypes();
@@ -16,7 +17,7 @@ function RoomList() {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState<string | undefined>();
-
+  const router = useRouter();
   const { data, isLoading } = useGetRooms(
     undefined,
     selectedFilter,
@@ -85,7 +86,11 @@ function RoomList() {
         <div className="flex flex-col items-center gap-2">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {rooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
+              <RoomCard
+                key={room.id}
+                onClick={() => router.push(`rooms/${room.id}`)}
+                room={room}
+              />
             ))}
           </div>
 

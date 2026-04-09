@@ -2,120 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-// Dummy booking data
-const DUMMY_BOOKING_DATA = {
-  _id: "67a1b2c3d4e5f6g7h8i9",
-  guestName: "Rajesh Kumar",
-  guestEmail: "rajesh.kumar@example.com",
-  roomId: {
-    roomNumber: "205",
-    floor: 2,
-  },
-  roomTypeId: {
-    type: "Deluxe Suite",
-    price: 4250,
-  },
-  checkIn: "2026-04-15T14:00:00.000Z",
-  checkOut: "2026-04-17T11:00:00.000Z",
-  numberOfGuests: 2,
-  totalAmount: 8500,
-  status: "CONFIRMED",
-  paidAt: new Date().toISOString(),
-};
-
-interface BookingDetails {
-  _id: string;
-  guestName: string;
-  guestEmail: string;
-  roomId: {
-    roomNumber: string;
-    floor: number;
-  };
-  roomTypeId: {
-    type: string;
-    price: number;
-  };
-  checkIn: string;
-  checkOut: string;
-  numberOfGuests: number;
-  totalAmount: number;
-  status: string;
-  paidAt: string;
-}
+import { usePayment } from "@/context/payment-context";
 
 export default function BookingSuccessPage({ id }: { id: string }) {
   const router = useRouter();
-
-  const [booking, setBooking] = useState<BookingDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate API call - Replace with actual API
-    setTimeout(() => {
-      setBooking(DUMMY_BOOKING_DATA);
-      setLoading(false);
-    }, 800);
-  }, [id]);
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-IN", {
-      weekday: "long",
+  const { paymentInfo } = usePayment();
+  function formateDate() {
+    const date = new Date();
+    return date.toLocaleDateString("en-gb", {
       year: "numeric",
+      weekday: "long",
       month: "long",
       day: "numeric",
     });
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  if (loading) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "#fffbf5" }}
-      >
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center gradient-amber">
-            <svg
-              className="animate-spin h-8 w-8 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-          </div>
-          <p style={{ color: "#57534e" }}>Loading booking details...</p>
-        </div>
-        <style jsx>{`
-          .gradient-amber {
-            background: linear-gradient(135deg, #fbbf24, #d97706);
-          }
-        `}</style>
-      </div>
-    );
   }
 
-  if (!booking) {
+  if (paymentInfo.bookingId === "") {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
@@ -173,7 +75,7 @@ export default function BookingSuccessPage({ id }: { id: string }) {
           <p className="text-sm" style={{ color: "#78716c" }}>
             Confirmation sent to{" "}
             <span className="font-medium" style={{ color: "#d97706" }}>
-              {booking.guestEmail}
+              {paymentInfo.guestEmail}
             </span>
           </p>
         </div>
@@ -199,7 +101,7 @@ export default function BookingSuccessPage({ id }: { id: string }) {
                     className="font-mono font-semibold"
                     style={{ color: "#d97706" }}
                   >
-                    #{booking._id.slice(-8).toUpperCase()}
+                    #{paymentInfo.bookingId.slice(-8).toUpperCase()}
                   </span>
                 </p>
               </div>
@@ -208,10 +110,7 @@ export default function BookingSuccessPage({ id }: { id: string }) {
                   Payment Date
                 </p>
                 <p className="font-semibold" style={{ color: "#44403c" }}>
-                  {formatDate(booking.paidAt)}
-                </p>
-                <p className="text-sm" style={{ color: "#78716c" }}>
-                  {formatTime(booking.paidAt)}
+                  {formateDate()}
                 </p>
               </div>
             </div>
@@ -260,7 +159,7 @@ export default function BookingSuccessPage({ id }: { id: string }) {
                     Room Type
                   </p>
                   <p className="font-semibold" style={{ color: "#44403c" }}>
-                    {booking.roomTypeId.type}
+                    {paymentInfo.roomType}
                   </p>
                 </div>
                 <div>
@@ -268,24 +167,7 @@ export default function BookingSuccessPage({ id }: { id: string }) {
                     Room Number
                   </p>
                   <p className="font-semibold" style={{ color: "#44403c" }}>
-                    {booking.roomId.roomNumber}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm mb-1" style={{ color: "#78716c" }}>
-                    Floor
-                  </p>
-                  <p className="font-semibold" style={{ color: "#44403c" }}>
-                    {booking.roomId.floor}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm mb-1" style={{ color: "#78716c" }}>
-                    Guests
-                  </p>
-                  <p className="font-semibold" style={{ color: "#44403c" }}>
-                    {booking.numberOfGuests}{" "}
-                    {booking.numberOfGuests > 1 ? "Guests" : "Guest"}
+                    {paymentInfo.roomNumber}
                   </p>
                 </div>
               </div>
@@ -335,7 +217,7 @@ export default function BookingSuccessPage({ id }: { id: string }) {
                     Check-in
                   </p>
                   <p className="text-lg font-bold" style={{ color: "#78350f" }}>
-                    {formatDate(booking.checkIn)}
+                    {paymentInfo.checkInDate}
                   </p>
                   <p className="text-sm mt-1" style={{ color: "#92400e" }}>
                     After 2:00 PM
@@ -355,7 +237,7 @@ export default function BookingSuccessPage({ id }: { id: string }) {
                     Check-out
                   </p>
                   <p className="text-lg font-bold" style={{ color: "#78350f" }}>
-                    {formatDate(booking.checkOut)}
+                    {paymentInfo.checkOutDate}
                   </p>
                   <p className="text-sm mt-1" style={{ color: "#92400e" }}>
                     Before 11:00 AM
@@ -401,10 +283,10 @@ export default function BookingSuccessPage({ id }: { id: string }) {
                 }}
               >
                 <p className="font-semibold mb-2" style={{ color: "#44403c" }}>
-                  {booking.guestName}
+                  {paymentInfo.guestName}
                 </p>
                 <p className="text-sm" style={{ color: "#78716c" }}>
-                  {booking.guestEmail}
+                  {paymentInfo.guestEmail}
                 </p>
               </div>
             </div>
@@ -451,7 +333,7 @@ export default function BookingSuccessPage({ id }: { id: string }) {
                     className="text-2xl font-bold"
                     style={{ color: "#065f46" }}
                   >
-                    ₹{booking.totalAmount.toLocaleString()}
+                    ₹{paymentInfo.totalAmount.toLocaleString()}
                   </p>
                 </div>
                 <p className="text-xs" style={{ color: "#059669" }}>

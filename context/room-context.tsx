@@ -10,6 +10,7 @@ export interface RoomContextType {
   setCurrentModal: React.Dispatch<
     React.SetStateAction<"createCategory" | "createRoom" | "BookRoom" | null>
   >;
+  selectedCategory: { categoryName: string; categoryId: string };
   setSelectedCategory: React.Dispatch<
     React.SetStateAction<{
       categoryName: string;
@@ -37,9 +38,10 @@ export function RoomContextProvider({
     return {
       currentModal,
       setCurrentModal,
+      selectedCategory,
       setSelectedCategory,
     };
-  }, [currentModal]);
+  }, [currentModal, selectedCategory]);
 
   return (
     <RoomContext value={providerValue}>
@@ -65,12 +67,15 @@ export function RoomContextProvider({
                 setCurrentModal(null);
                 setSelectedCategory({ categoryId: "", categoryName: "" });
               }}
-              categoryId={selectedCategory.categoryId}
-              categoryName={selectedCategory.categoryName}
             />
           )}
           {currentModal === "BookRoom" && (
-            <BookRoom onCancel={() => setCurrentModal(null)} />
+            <BookRoom
+              onCancel={() => {
+                setCurrentModal(null);
+                setSelectedCategory({ categoryId: "", categoryName: "" });
+              }}
+            />
           )}
         </Modal>
       )}

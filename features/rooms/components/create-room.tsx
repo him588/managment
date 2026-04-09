@@ -8,25 +8,26 @@ import {
 import { RoomCategoryType } from "@/features/rooms/types/types";
 import { useUIContext } from "@/context/ui-context";
 import { AxiosError } from "axios";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BedDouble, Layers, Sparkles, X, Check, ImagePlus } from "lucide-react";
 import { clearError } from "@/components/helper/input";
+import { useRoomsContext } from "@/context/room-context";
 
 interface CreateRoomProps {
   accentColor: string;
   onCancel?: () => void;
-  categoryId?: string;
-  categoryName?: string;
 }
 
-function CreateRoom({ onCancel, categoryName, categoryId }: CreateRoomProps) {
+function CreateRoom({ onCancel }: CreateRoomProps) {
   const { data } = useGetRoomTypes();
+
   const { mutate: createRoom, isPending, isSuccess } = useCreateRoom();
   const { setToastMessage, setToastType } = useUIContext();
+  const { selectedCategory } = useRoomsContext();
 
   const [form, setForm] = useState({
     roomNumber: "",
-    categoryId: categoryId ? categoryId : "",
+    categoryId: selectedCategory.categoryId ? selectedCategory.categoryId : "",
     floor: "",
     amenities: "",
     images: [] as File[],
@@ -103,10 +104,6 @@ function CreateRoom({ onCancel, categoryName, categoryId }: CreateRoomProps) {
     });
   };
 
-  useEffect(() => {
-    console.log("category id is available to me", categoryId);
-  }, [categoryId]);
-
   /* ── Success ── */
   if (isSuccess) {
     return (
@@ -131,8 +128,8 @@ function CreateRoom({ onCancel, categoryName, categoryId }: CreateRoomProps) {
             Rooms
           </p>
           <h2 className="font-playfair text-stone-800 text-xl">
-            {categoryName
-              ? `Create Room for ${categoryName} category`
+            {selectedCategory.categoryId
+              ? `Create Room for ${selectedCategory.categoryName} category`
               : "Create Room"}
           </h2>
         </div>
@@ -156,7 +153,7 @@ function CreateRoom({ onCancel, categoryName, categoryId }: CreateRoomProps) {
           onFocus={() => clearError(setErrors, "roomNumber")}
           onChange={(e) => setForm({ ...form, roomNumber: e.target.value })}
         />
-        {categoryId === "" && (
+        {selectedCategory.categoryId === "" && (
           <div>
             <label className="font-jakarta text-[10px] uppercase tracking-widest text-stone-400 block mb-1.5">
               Room Category

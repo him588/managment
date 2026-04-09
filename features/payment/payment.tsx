@@ -7,6 +7,7 @@ import { jwtDecode } from "jwt-decode";
 import { isTokenValid } from "@/components/helper/jwt";
 import { usePaymentInfo } from "./hook/use-api";
 import { formatDate } from "@/components/helper/common";
+import { usePayment } from "@/context/payment-context";
 
 declare global {
   interface Window {
@@ -20,20 +21,7 @@ export default function PaymentPage({ id }: { id: string }) {
   const { data, error: fetchDataError, isLoading } = usePaymentInfo(id);
   const [errors, setError] = useState("");
   const [processing, setProcessing] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState({
-    bookingId: "",
-    roomType: "",
-    totalNights: "",
-    pricePerNight: "",
-    checkInDate: "",
-    checkOutDate: "",
-    guestName: "",
-    guestEmail: "",
-    totalAmount: "",
-    roomNumber: "",
-    orderId: "",
-    paymentSecret: "",
-  });
+  const { paymentInfo, setPaymentInfo } = usePayment();
 
   useEffect(() => {
     try {
@@ -74,7 +62,7 @@ export default function PaymentPage({ id }: { id: string }) {
       console.error("Error processing payment data:", error);
       setLinkExpired(true);
     }
-  }, [id, data]);
+  }, [id, data, setPaymentInfo]);
 
   useEffect(() => {
     console.log(paymentInfo);
@@ -91,7 +79,7 @@ export default function PaymentPage({ id }: { id: string }) {
       description: `${paymentInfo.roomNumber} - ${paymentInfo.totalNights} Night${+paymentInfo.totalNights > 1 ? "s" : ""}`,
       order_id: paymentInfo.orderId,
       handler: async function () {
-        router.push(`/booking-success/${paymentInfo.bookingId}`);
+        router.push(`/payment/success`);
       },
       prefill: {
         name: paymentInfo.guestName,

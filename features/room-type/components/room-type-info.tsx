@@ -1,10 +1,13 @@
-import { BedDouble, Pencil, Plus } from "lucide-react";
-import React from "react";
+import { BedDouble, CalendarSearch, Pencil, Plus } from "lucide-react";
+import React, { useState } from "react";
 import { RoomInfoType } from "@/features/room-type/types/type";
 import { useRoomsContext } from "@/context/room-context";
+import Modal from "@/components/common/modal";
+import EditRoomType from "./edit-category";
 
 function RoomTypeInfo({ detail }: { detail: RoomInfoType }) {
   const { setSelectedCategory, setCurrentModal } = useRoomsContext();
+  const [showEdit, setShowEdit] = useState(false);
   return (
     <section>
       <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
@@ -25,11 +28,24 @@ function RoomTypeInfo({ detail }: { detail: RoomInfoType }) {
 
           <div className="flex gap-2 self-start">
             <button
-              //   onClick={onEditRoomType}
+              onClick={() => setShowEdit(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-stone-300 border border-stone-700 hover:bg-stone-700 hover:text-white transition-all"
             >
               <Pencil size={12} />
               Edit type
+            </button>
+            <button
+              onClick={() => {
+                setSelectedCategory({
+                  categoryId: detail.roomTypeId,
+                  categoryName: detail.type,
+                });
+                setCurrentModal("BookRoom");
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-stone-900 bg-gradient-to-r from-amber-400 to-orange-400 hover:opacity-90 transition-all border-0"
+            >
+              <CalendarSearch size={12} />
+              Book Room
             </button>
             <button
               onClick={() => {
@@ -72,6 +88,17 @@ function RoomTypeInfo({ detail }: { detail: RoomInfoType }) {
           />
         </div>
       </div>
+      <Modal isOpen={showEdit} onClose={() => setShowEdit(false)}>
+        <EditRoomType
+          onCancel={() => setShowEdit(false)}
+          initial={{
+            type: detail.type,
+            price: detail.price,
+            maxGuest: detail.maxGuest,
+            id: detail.roomTypeId,
+          }}
+        />
+      </Modal>
     </section>
   );
 }

@@ -6,11 +6,12 @@ import {
   getRoomStatus,
   createRoom,
   bookRoom,
-} from "@/features/rooms/services/service";
+} from "@/features/rooms/services/services";
 import {
   BookRoomPlayload,
   CreateRoomTypePayload,
 } from "@/features/rooms/types/types";
+import { Variable } from "lucide-react";
 
 export const useGetRoomTypes = () => {
   return useQuery({
@@ -40,6 +41,7 @@ export const useGetRooms = (
   return useQuery({
     queryKey: ["rooms", hotelId, categoryId, pageSize, pageNumber], // Fixed: dynamic query key
     queryFn: () => getRooms(hotelId, categoryId, pageSize, pageNumber),
+    placeholderData: (prev) => prev,
   });
 };
 
@@ -55,8 +57,14 @@ export const useCreateRoom = () => {
 
   return useMutation({
     mutationFn: (formData: FormData) => createRoom(formData),
-    onSuccess: () => {
+    onSuccess: (data, Variable: FormData) => {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      queryClient.invalidateQueries({
+        queryKey: ["roomType", Variable.get("categoryId")],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["room-status", Variable.get("categoryId")],
+      });
     },
   });
 };
@@ -66,8 +74,11 @@ export const useBookRoom = () => {
 
   return useMutation({
     mutationFn: (bookingData: BookRoomPlayload) => bookRoom(bookingData),
-    onSuccess: () => {
+    onSuccess: (data, Variable: BookRoomPlayload) => {
       queryClient.invalidateQueries({ queryKey: ["room-status"] });
+      queryClient.invalidateQueries({
+        queryKey: ["room-status", Variable.categoryId],
+      });
     },
   });
 };

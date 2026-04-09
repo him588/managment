@@ -11,8 +11,12 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { RoomInfoType, RoomsByStatus } from "../types/type";
+import { useRoomsContext } from "@/context/room-context";
+import { useRouter } from "next/navigation";
 
 function RoomList({ detail }: { detail: RoomInfoType }) {
+  const { setSelectedCategory, setCurrentModal } = useRoomsContext();
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -24,7 +28,13 @@ function RoomList({ detail }: { detail: RoomInfoType }) {
           </p>
         </div>
         <button
-          //   onClick={onAddRoom}
+          onClick={() => {
+            setSelectedCategory({
+              categoryId: detail.roomTypeId,
+              categoryName: detail.type,
+            });
+            setCurrentModal("createRoom");
+          }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 shadow-sm shadow-amber-100 hover:opacity-90 transition-all border-0"
         >
           <Plus size={12} />
@@ -103,9 +113,15 @@ function RoomCard({ room }: { room: RoomsByStatus }) {
   const cfg = statusConfig[room.status];
   const StatusIcon = cfg.icon;
   const [imgError, setImgError] = useState(false);
+  const router = useRouter();
 
   return (
-    <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden hover:-translate-y-0.5 hover:shadow-md hover:shadow-stone-100 transition-all cursor-pointer group">
+    <div
+      onClick={() => {
+        router.push(`/rooms/${room.roomId}`);
+      }}
+      className="bg-white border border-stone-200 rounded-2xl overflow-hidden hover:-translate-y-0.5 hover:shadow-md hover:shadow-stone-100 transition-all cursor-pointer group"
+    >
       <div className="relative h-36 bg-stone-100">
         {room.images[0] && !imgError ? (
           <img
