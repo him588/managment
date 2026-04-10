@@ -1,6 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BedDouble,
   ChevronLeft,
@@ -15,26 +17,30 @@ import {
   ImageOff,
 } from "lucide-react";
 import dayjs from "dayjs";
-import { IRoom } from "./types/types";
+import { Room } from "./types/types";
+import { useRoomDetails } from "./hooks/use-rooms";
 
 interface RoomHeroCardProps {
-  room: IRoom;
+  roomId: string;
+  room: Room;
   onEdit?: () => void;
   onToggleMaintenance?: () => void;
   onBack?: () => void;
 }
 
 export function RoomHeroCard({
-  room,
+  roomId,
   onEdit,
   onToggleMaintenance,
   onBack,
 }: RoomHeroCardProps) {
   const [activeImg, setActiveImg] = useState(0);
   const [imgError, setImgError] = useState<Record<number, boolean>>({});
+  const [room, setRoom] = useState<null | Room>(null);
+  const { data } = useRoomDetails(roomId);
 
-  const isMaintenance = room.status === "maintenance";
-  const images = room.images ?? [];
+  const isMaintenance = room?.status === "maintenance";
+  const images = room?.images ?? [];
 
   function prev() {
     setActiveImg((i) => (i === 0 ? images.length - 1 : i - 1));
@@ -43,6 +49,34 @@ export function RoomHeroCard({
   function next() {
     setActiveImg((i) => (i === images.length - 1 ? 0 : i + 1));
   }
+
+  useEffect(() => {
+    if (data?.data) {
+      const room = data.data.room;
+      if (room) {
+        setRoom(() => {
+          const updatedDetails = {
+            id: room.id,
+            hotelId: room.hotelId,
+            roomTypeId: room.roomTypeId._id,
+            roomNumber: room.roomNumber,
+            floor: room.floor,
+            status: room.status,
+            images: room.images,
+            createdAt: room.createdAt,
+            updatedAt: room.updatedAt,
+            roomType: {
+              type: room.roomTypeId.type,
+              price: room.roomTypeId.price,
+              maxGuest: room.roomTypeId.maxGuest,
+              tags: room.roomTypeId.tags,
+            },
+          };
+          return updatedDetails;
+        });
+      }
+    }
+  }, [data?.data]);
 
   return (
     <section className="space-y-0">
@@ -67,11 +101,11 @@ export function RoomHeroCard({
                 Room
               </p>
               <h1 className="font-playfair text-xl text-amber-100 leading-tight">
-                #{room.roomNumber}
+                #{room?.roomNumber}
               </h1>
               <p className="text-xs text-stone-500 mt-0.5">
-                Floor {room.floor}
-                {room.roomType && ` · ${room.roomType.type}`}
+                Floor {room?.floor}
+                {room?.roomType && ` · ${room.roomType.type}`}
               </p>
             </div>
           </div>
@@ -116,22 +150,22 @@ export function RoomHeroCard({
 
         {/* ── Stats strip ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-stone-100 border-t border-stone-100">
-          <StatCell label="Room type" value={room.roomType?.type ?? "—"} />
+          <StatCell label="Room type" value={room?.roomType?.type ?? "—"} />
           <StatCell
             label="Price / night"
             value={
-              room.roomType
+              room?.roomType
                 ? `₹${room.roomType.price.toLocaleString("en-IN")}`
                 : "—"
             }
           />
           <StatCell
             label="Max guests"
-            value={room.roomType ? `${room.roomType.maxGuest} guests` : "—"}
+            value={room?.roomType ? `${room.roomType.maxGuest} guests` : "—"}
           />
           <StatCell
             label="Last updated"
-            value={dayjs(room.updatedAt).format("D MMM YYYY")}
+            value={dayjs(room?.updatedAt).format("D MMM YYYY")}
           />
         </div>
 
@@ -142,7 +176,7 @@ export function RoomHeroCard({
             {images.length > 0 && !imgError[activeImg] ? (
               <img
                 src={images[activeImg]}
-                alt={`Room ${room.roomNumber}`}
+                alt={`Room ${room?.roomNumber}`}
                 className="w-full h-full object-cover"
                 onError={() =>
                   setImgError((p) => ({ ...p, [activeImg]: true }))
@@ -234,7 +268,7 @@ export function RoomHeroCard({
 
             {/* Tags & room info */}
             <div className="p-4 space-y-4 flex-1">
-              {room.roomType?.tags && room.roomType.tags.length > 0 && (
+              {room?.roomType?.tags && room.roomType.tags.length > 0 && (
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-stone-400 mb-2">
                     Tags
@@ -257,17 +291,17 @@ export function RoomHeroCard({
                 <InfoRow
                   icon={<Layers size={12} />}
                   label="Floor"
-                  value={room.floor}
+                  value={room?.floor || ""}
                 />
                 <InfoRow
                   icon={<Users size={12} />}
                   label="Max guests"
-                  value={`${room.roomType?.maxGuest ?? "—"}`}
+                  value={`${room?.roomType?.maxGuest ?? "—"}`}
                 />
                 <InfoRow
                   icon={<CalendarClock size={12} />}
                   label="Added"
-                  value={dayjs(room.createdAt).format("D MMM YYYY")}
+                  value={dayjs(room?.createdAt).format("D MMM YYYY")}
                 />
               </div>
             </div>

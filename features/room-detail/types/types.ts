@@ -1,5 +1,5 @@
-export interface IRoom {
-  _id: string;
+export interface Room {
+  id: string;
   roomTypeId: string;
   hotelId: string;
   roomNumber: string;

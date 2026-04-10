@@ -4,11 +4,11 @@ import { useState } from "react";
 import { DUMMY_ROOM, DUMMY_BOOKINGS } from "./types/const";
 import { RoomBookingsList } from "./room-booking-list";
 import { RoomHeroCard } from "./room-hero-card";
-import { IRoom, IRoomBooking, RoomBookingStatus } from "./types/types";
+import { Room, IRoomBooking, RoomBookingStatus } from "./types/types";
 
 interface RoomDetailPageProps {
   id: string;
-  room?: IRoom;
+  room?: Room;
   bookings?: IRoomBooking[];
   onBack?: () => void;
   onEdit?: () => void;
@@ -22,6 +22,7 @@ interface RoomDetailPageProps {
 
 export default function RoomDetailPage({
   id,
+  room = DUMMY_ROOM,
   bookings = DUMMY_BOOKINGS,
   onBack,
   onEdit,
@@ -32,7 +33,13 @@ export default function RoomDetailPage({
   return (
     <div className=" font-jakarta   max-w-5xl mx-auto">
       {/* ── Hero: image gallery + room info ── */}
-      <RoomHeroCard roomId={id} />
+      <RoomHeroCard
+        roomId={id}
+        room={room}
+        onBack={onBack}
+        onEdit={onEdit}
+        onToggleMaintenance={onToggleMaintenance}
+      />
 
       {/* ── Bookings ── */}
       <RoomBookingsList
