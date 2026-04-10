@@ -22,29 +22,25 @@ interface RoomDetailPageProps {
 
 export default function RoomDetailPage({
   id,
-  room = DUMMY_ROOM,
   bookings = DUMMY_BOOKINGS,
-  onBack,
-  onEdit,
-  onNewBooking,
   onToggleMaintenance,
   onUpdateBookingStatus,
 }: RoomDetailPageProps) {
+  const [roomNumber, setRoomNumber] = useState("");
   return (
-    <div className=" font-jakarta   max-w-5xl mx-auto">
+    <div className=" font-jakarta  space-y-8  max-w-5xl mx-auto">
       {/* ── Hero: image gallery + room info ── */}
       <RoomHeroCard
+        setRoomNumber={setRoomNumber}
         roomId={id}
-        room={room}
-        onBack={onBack}
-        onEdit={onEdit}
         onToggleMaintenance={onToggleMaintenance}
       />
 
       {/* ── Bookings ── */}
       <RoomBookingsList
+        roomId={id}
+        roomNumber={roomNumber}
         bookings={bookings}
-        onNewBooking={onNewBooking}
         onUpdateStatus={onUpdateBookingStatus}
       />
     </div>

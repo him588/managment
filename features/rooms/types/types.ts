@@ -35,4 +35,5 @@ export interface BookRoomPlayload {
   checkIn: string;
   checkOut: string;
   guests: number;
+  roomId?: string;
 }

@@ -2,12 +2,11 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BedDouble,
   ChevronLeft,
   ChevronRight,
-  Pencil,
   Wrench,
   CheckCircle2,
   Layers,
@@ -18,29 +17,26 @@ import {
 } from "lucide-react";
 import dayjs from "dayjs";
 import { Room } from "./types/types";
-import { useRoomDetails } from "./hooks/use-rooms";
+import { useRoomDetails, useUpdateRoomStatus } from "./hooks/use-rooms";
+import { useRouter } from "next/navigation";
+import { returnAxiosError } from "@/components/helper/axios";
+import { useUIContext } from "@/context/ui-context";
 
 interface RoomHeroCardProps {
   roomId: string;
-  room: Room;
-  onEdit?: () => void;
-  onToggleMaintenance?: () => void;
-  onBack?: () => void;
+  setRoomNumber: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export function RoomHeroCard({
-  roomId,
-  onEdit,
-  onToggleMaintenance,
-  onBack,
-}: RoomHeroCardProps) {
+export function RoomHeroCard({ roomId, setRoomNumber }: RoomHeroCardProps) {
   const [activeImg, setActiveImg] = useState(0);
   const [imgError, setImgError] = useState<Record<number, boolean>>({});
   const [room, setRoom] = useState<null | Room>(null);
   const { data } = useRoomDetails(roomId);
-
+  const router = useRouter();
+  const { mutate: updateRoomStatus, isPending } = useUpdateRoomStatus();
   const isMaintenance = room?.status === "maintenance";
   const images = room?.images ?? [];
+  const { setToastMessage, setToastType } = useUIContext();
 
   function prev() {
     setActiveImg((i) => (i === 0 ? images.length - 1 : i - 1));
@@ -54,6 +50,7 @@ export function RoomHeroCard({
     if (data?.data) {
       const room = data.data.room;
       if (room) {
+        setRoomNumber(room.roomNumber);
         setRoom(() => {
           const updatedDetails = {
             id: room.id,
@@ -76,13 +73,27 @@ export function RoomHeroCard({
         });
       }
     }
-  }, [data?.data]);
+  }, [data?.data, setRoomNumber]);
+
+  function changeStatus() {
+    const updatedStatus = isMaintenance ? "available" : "maintenance";
+    updateRoomStatus(
+      { roomId: roomId, status: updatedStatus },
+      {
+        onError: (err) => {
+          const error = returnAxiosError(err);
+          setToastMessage(error);
+          setToastType("error");
+        },
+      },
+    );
+  }
 
   return (
     <section className="space-y-0">
       {/* ── Breadcrumb ── */}
       <button
-        onClick={onBack}
+        onClick={() => router.back()}
         className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors mb-4"
       >
         <ChevronLeft size={13} />
@@ -130,7 +141,7 @@ export function RoomHeroCard({
             </div>
 
             <button
-              onClick={onToggleMaintenance}
+              onClick={changeStatus}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all
                 ${
                   isMaintenance

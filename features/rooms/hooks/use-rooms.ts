@@ -6,12 +6,12 @@ import {
   getRoomStatus,
   createRoom,
   bookRoom,
+  bookRoomById,
 } from "@/features/rooms/services/services";
 import {
   BookRoomPlayload,
   CreateRoomTypePayload,
 } from "@/features/rooms/types/types";
-import { Variable } from "lucide-react";
 
 export const useGetRoomTypes = () => {
   return useQuery({
@@ -79,6 +79,16 @@ export const useBookRoom = () => {
       queryClient.invalidateQueries({
         queryKey: ["room-status", Variable.categoryId],
       });
+    },
+  });
+};
+
+export const useBookRoomById = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (bookingData: BookRoomPlayload) => bookRoomById(bookingData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["room-status"] });
     },
   });
 };

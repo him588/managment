@@ -44,3 +44,9 @@ export async function getRoomStatus() {
 export async function bookRoom(bookingData: BookRoomPlayload) {
   return apiClient.post("/room-bookings", { ...bookingData }, {});
 }
+
+export async function bookRoomById(bookingData: BookRoomPlayload) {
+  return apiClient.post(`/room-bookings/book-room/${bookingData.roomId}`, {
+    ...bookingData,
+  });
+}

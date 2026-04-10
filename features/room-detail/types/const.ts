@@ -1,6 +1,47 @@
-import { IRoom, IRoomBooking, RoomBookingStatus } from "./types";
+import { Room, IRoomBooking, RoomBookingStatus } from "./types";
 
-export const DUMMY_ROOM: IRoom = {
+export const bookingStatusConfig: Record<
+  RoomBookingStatus,
+  { label: string; bg: string; text: string; border: string; dot: string }
+> = {
+  [RoomBookingStatus.PENDING]: {
+    label: "Pending",
+    bg: "bg-yellow-50",
+    text: "text-yellow-700",
+    border: "border-yellow-200",
+    dot: "bg-yellow-500",
+  },
+  [RoomBookingStatus.CONFIRMED]: {
+    label: "Confirmed",
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+    border: "border-blue-200",
+    dot: "bg-blue-500",
+  },
+  [RoomBookingStatus.CHECKED_IN]: {
+    label: "Checked in",
+    bg: "bg-green-50",
+    text: "text-green-700",
+    border: "border-green-200",
+    dot: "bg-green-500",
+  },
+  [RoomBookingStatus.CHECKED_OUT]: {
+    label: "Checked out",
+    bg: "bg-gray-50",
+    text: "text-gray-700",
+    border: "border-gray-200",
+    dot: "bg-gray-500",
+  },
+  [RoomBookingStatus.CANCELLED]: {
+    label: "Cancelled",
+    bg: "bg-red-50",
+    text: "text-red-700",
+    border: "border-red-200",
+    dot: "bg-red-500",
+  },
+};
+
+export const DUMMY_ROOM: Room = {
   _id: "69caae5a8b6e20eb7e29abbc",
   roomTypeId: "69c3b3d58ec363e6880b89fa",
   hotelId: "69b5a814b970ab623ecdb80c",

@@ -3,7 +3,13 @@ import Modal from "@/components/common/modal";
 import BookRoom from "@/features/rooms/components/book-room";
 import CreateCategory from "@/features/rooms/components/create-category";
 import CreateRoom from "@/features/rooms/components/create-room";
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export interface RoomContextType {
   currentModal: "createCategory" | "createRoom" | "BookRoom" | null;
@@ -15,6 +21,16 @@ export interface RoomContextType {
     React.SetStateAction<{
       categoryName: string;
       categoryId: string;
+    }>
+  >;
+  activeRoom: {
+    activeRoomNumber: string;
+    activeRoomId: string;
+  };
+  setActiveRoom: React.Dispatch<
+    React.SetStateAction<{
+      activeRoomNumber: string;
+      activeRoomId: string;
     }>
   >;
 }
@@ -34,14 +50,25 @@ export function RoomContextProvider({
     categoryId: "",
   });
 
+  const [activeRoom, setActiveRoom] = useState({
+    activeRoomNumber: "",
+    activeRoomId: "",
+  });
+
   const providerValue = useMemo(() => {
     return {
       currentModal,
       setCurrentModal,
       selectedCategory,
       setSelectedCategory,
+      activeRoom,
+      setActiveRoom,
     };
-  }, [currentModal, selectedCategory]);
+  }, [currentModal, selectedCategory, activeRoom]);
+
+  useEffect(() => {
+    console.log("active room", activeRoom);
+  }, [activeRoom]);
 
   return (
     <RoomContext value={providerValue}>
@@ -51,6 +78,10 @@ export function RoomContextProvider({
           onClose={() => {
             setCurrentModal(null);
             setSelectedCategory({ categoryId: "", categoryName: "" });
+            setActiveRoom({
+              activeRoomNumber: "",
+              activeRoomId: "",
+            });
           }}
           modalBoxClassName="rounded-[25px] w-[100%]"
         >
@@ -74,6 +105,10 @@ export function RoomContextProvider({
               onCancel={() => {
                 setCurrentModal(null);
                 setSelectedCategory({ categoryId: "", categoryName: "" });
+                setActiveRoom({
+                  activeRoomNumber: "",
+                  activeRoomId: "",
+                });
               }}
             />
           )}

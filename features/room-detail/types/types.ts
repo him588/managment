@@ -53,3 +53,14 @@ export interface IRoomBooking {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface RoomBookingsListProps {
+  roomId: string;
+  roomNumber: string;
+}
+
+export interface FilterType {
+  type: string;
+  value: string;
+  count: number;
+}

@@ -1,10 +1,14 @@
 "use client";
 
-import { useBookRoom, useGetRoomTypes } from "@/features/rooms/hooks/use-rooms";
+import {
+  useBookRoom,
+  useBookRoomById,
+  useGetRoomTypes,
+} from "@/features/rooms/hooks/use-rooms";
 import { clearError } from "@/components/helper/input";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BedDouble,
   CalendarDays,
@@ -39,9 +43,10 @@ type FormErrors = {
 // ── BookRoom ───────────────────────────────────────────────────────────────────
 function BookRoom({ onCancel }: BookRoomProps) {
   const { mutate, isPending, isSuccess } = useBookRoom();
+  const { mutate: bookRoomById, isSuccess: bookingCreated } = useBookRoomById();
   const { data } = useGetRoomTypes();
   const { setToastType, setToastMessage } = useUIContext();
-  const { selectedCategory } = useRoomsContext();
+  const { selectedCategory, activeRoom } = useRoomsContext();
 
   const roomTypes = useMemo(() => {
     return (
@@ -76,8 +81,11 @@ function BookRoom({ onCancel }: BookRoomProps) {
     if (!form.email && !/^\S+@\S+\.\S+$/.test(form.email))
       newErrors.email = "Enter a valid email address.";
 
-    if (!form.categoryId && selectedCategory.categoryId === "")
-      newErrors.categoryId = "Please select a room category.";
+    if (!activeRoom.activeRoomId) {
+      if (!form.categoryId && !selectedCategory.categoryId) {
+        newErrors.categoryId = "Please select a room category.";
+      }
+    }
 
     if (!form.checkIn) newErrors.checkIn = "Check-in date is required.";
 
@@ -98,22 +106,44 @@ function BookRoom({ onCancel }: BookRoomProps) {
     console.log("sumit works");
     if (!validateForm()) return;
     console.log("sumit still works");
+    if (activeRoom.activeRoomId) {
+      const payload = { ...form, roomId: activeRoom.activeRoomId };
+      bookRoomById(
+        { ...payload },
 
-    const categoryId = selectedCategory.categoryId
-      ? selectedCategory.categoryId
-      : form.categoryId;
-    mutate(
-      { ...form, categoryId: categoryId },
-      {
-        onError: (error) => {
-          console.log(error);
-          const err = returnAxiosError(error);
-          console.log(err);
-          setToastType("error");
-          setToastMessage(err);
+        {
+          onError: (error) => {
+            console.log(error);
+            const err = returnAxiosError(error);
+            console.log(err);
+            setToastType("error");
+            setToastMessage(err);
+          },
+          onSuccess: () => {
+            setTimeout(() => onCancel?.(), 1500);
+          },
         },
-      },
-    );
+      );
+    } else {
+      const categoryId = selectedCategory.categoryId
+        ? selectedCategory.categoryId
+        : form.categoryId;
+      mutate(
+        { ...form, categoryId: categoryId },
+        {
+          onError: (error) => {
+            console.log(error);
+            const err = returnAxiosError(error);
+            console.log(err);
+            setToastType("error");
+            setToastMessage(err);
+          },
+          onSuccess: () => {
+            setTimeout(() => onCancel?.(), 1500);
+          },
+        },
+      );
+    }
   }
 
   const nights =
@@ -122,7 +152,7 @@ function BookRoom({ onCancel }: BookRoomProps) {
       : 0;
 
   // ── Success state ──
-  if (isSuccess) {
+  if (isSuccess || bookingCreated) {
     return (
       <div className="flex flex-col items-center justify-center py-10 gap-4">
         <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
@@ -147,9 +177,13 @@ function BookRoom({ onCancel }: BookRoomProps) {
             Reservations
           </p>
           <h2 className="font-playfair text-stone-800 text-xl">
-            {selectedCategory.categoryName
-              ? `Book room for ${selectedCategory.categoryName.toLowerCase()} category`
-              : "Book Room"}
+            {selectedCategory.categoryName &&
+              `Book room for ${selectedCategory.categoryName.toLowerCase()} category`}
+            {selectedCategory?.categoryId === "" &&
+              activeRoom?.activeRoomId === "" &&
+              "Book Room"}
+            {activeRoom.activeRoomNumber &&
+              `Book room  ${activeRoom.activeRoomNumber.toLowerCase()}`}
           </h2>
         </div>
         <button
@@ -219,36 +253,37 @@ function BookRoom({ onCancel }: BookRoomProps) {
             onChange={(e) => setForm({ ...form, checkOut: e.target.value })}
           />
           {/* Room category select */}
-          {!selectedCategory.categoryId && (
-            <div>
-              <FieldLabel>Room Category</FieldLabel>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
-                  <BedDouble size={14} />
+          {selectedCategory.categoryId === "" &&
+            activeRoom.activeRoomId === "" && (
+              <div>
+                <FieldLabel>Room Category</FieldLabel>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none">
+                    <BedDouble size={14} />
+                  </div>
+                  <select
+                    value={form.categoryId}
+                    onFocus={() => clearError(setErrors, "categoryId")}
+                    onChange={(e) =>
+                      setForm({ ...form, categoryId: e.target.value })
+                    }
+                    className={`ob-input w-full font-jakarta text-sm text-stone-700 bg-amber-50/40 border rounded-xl pl-9 pr-4 py-2.5 transition-all appearance-none ${
+                      errors.categoryId
+                        ? "border-red-300 bg-red-50/30"
+                        : "border-stone-200"
+                    }`}
+                  >
+                    <option value="">Select category</option>
+                    {roomTypes.map((cat: { id: string; name: string }) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  value={form.categoryId}
-                  onFocus={() => clearError(setErrors, "categoryId")}
-                  onChange={(e) =>
-                    setForm({ ...form, categoryId: e.target.value })
-                  }
-                  className={`ob-input w-full font-jakarta text-sm text-stone-700 bg-amber-50/40 border rounded-xl pl-9 pr-4 py-2.5 transition-all appearance-none ${
-                    errors.categoryId
-                      ? "border-red-300 bg-red-50/30"
-                      : "border-stone-200"
-                  }`}
-                >
-                  <option value="">Select category</option>
-                  {roomTypes.map((cat: { id: string; name: string }) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+                {errors.categoryId && <FieldError msg={errors.categoryId} />}
               </div>
-              {errors.categoryId && <FieldError msg={errors.categoryId} />}
-            </div>
-          )}
+            )}
 
           {/* Guests */}
           <Field
