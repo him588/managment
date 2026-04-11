@@ -32,3 +32,12 @@ export type UIContext = {
   toastMessage: string;
   setToastMessage: React.Dispatch<React.SetStateAction<string>>;
 };
+
+export type ServiceContextType = {
+  activeTab: "Services" | "Staff";
+  setActiveTab: React.Dispatch<React.SetStateAction<"Services" | "Staff">>;
+  serviceModal: "Services" | "Staff" | null;
+  setServiceModal: React.Dispatch<
+    React.SetStateAction<"Services" | "Staff" | null>
+  >;
+};
